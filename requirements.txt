@@ -1,0 +1,15 @@
+fastapi
+fastapi[standard]
+uvicorn
+
+python-jose[cryptography]
+passlib[bcrypt] 
+python-multipart 
+redis 
+slowapi 
+python-dotenv
+sqlalchemy 
+psycopg2-binary
+
+
+argon2-cffi
