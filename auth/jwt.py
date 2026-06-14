@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Annotated
 from jose import jwt, JWTError, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -60,7 +60,7 @@ def decode_access_token(token:str) -> dict:
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
-            algorithm=[settings.ALGORITHM]
+            algorithms=[settings.ALGORITHM]
         )
         return payload
     except JWTError:
@@ -73,7 +73,7 @@ def decode_access_token(token:str) -> dict:
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     """
     Dependency to extract and validate the current user from JWT token.
-    use this in the rout dependencies to protect endpoints.
+    Use this token in the route dependencies to /user/current_user endpoints.
     """
     payload = decode_access_token(token)
     username: str = payload.get("sub")

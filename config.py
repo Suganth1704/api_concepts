@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES:int = 30
     REFRESH_TOKEN_EXPRIRE_DAYS:int =7
 
+    #redis cache
+    REDIS_HOST:str
+    REDIS_PORT:int
+    REDIS_USR:str
+    REDIS_PWD:str
+
     # Application
     APP_NAME: str = "API Prod"
     DEBUG: bool = False
