@@ -14,6 +14,7 @@ from app.utils.cache import (
 )
 from typing import Annotated
 from app.config import get_settings
+from app.routes.schemas import User
 
 router = APIRouter()
 settings = get_settings()
@@ -96,7 +97,7 @@ async def user_id(test_user_id:str, current_user: dict = Depends(get_current_use
     return test_user
 
 @router.put('/user/{test_user_id}')
-async def update_user(test_user_id:str, user_data:dict, current_user: dict = Depends(get_current_user)):
+async def update_user(test_user_id:str, user_data:User , current_user: dict = Depends(get_current_user)):
     test_user = TEST_USER_DB.get(test_user_id, None)
     if not test_user:
         responses_content = {
@@ -105,11 +106,11 @@ async def update_user(test_user_id:str, user_data:dict, current_user: dict = Dep
         }
         return JSONResponse(content=responses_content, status_code=status.HTTP_404_NOT_FOUND)
 
-    updated_test_user =  test_user | user_data
+    updated_test_user =  test_user | user_data.dict()
     TEST_USER_DB[test_user_id] = updated_test_user
 
     #Invalidate the cache
-    #invalidate_cache(pattern=f'user_id:*{test_user_id}*')
+    invalidate_cache(pattern=f'user_id:*{test_user_id}*')
 
     responses_content = {
         'status_code':status.HTTP_200_OK,

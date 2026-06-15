@@ -68,7 +68,7 @@ def cache_response(expire: int = 300):
             except redis.RedisError as e:
                 logger.error(f"Redis caching error: {e}")
 
-            return JSONResponse(content=result, status_code=status.HTTP_200_OK)
+            return JSONResponse(content=responses_content, status_code=status.HTTP_200_OK)
         return wrapper
     return decorator
 
@@ -84,6 +84,6 @@ def invalidate_cache(pattern:str) -> None:
         keys = redis_client.keys(pattern=pattern)
         if keys:
             logger.info('Invalidating the existing cache')
-            redis_clinet.delete(*keys)
+            redis_client.delete(*keys)
     except redis.RedisError as e:
         logger.error(f"Cache invalidation error: {e}")
