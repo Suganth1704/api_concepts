@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from datetime import timedelta
 from app.auth.jwt import (
     create_access_token,
@@ -18,6 +20,8 @@ from app.routes.schemas import User
 
 router = APIRouter()
 settings = get_settings()
+
+limiter = Limiter(key_func=get_remote_address)
 
 USER_DB = {
     "admin":{
@@ -84,8 +88,9 @@ async def current_user(current_user: dict = Depends(get_current_user)):
     }
 
 @router.get('/user/{test_user_id}')
+@limiter.limit("10/minute")
 @cache_response(expire=60)
-async def user_id(test_user_id:str, current_user: dict = Depends(get_current_user)) -> dict:
+async def user_id(test_user_id:str, request: Request, current_user: dict = Depends(get_current_user)) -> dict:
 
     test_user = TEST_USER_DB.get(test_user_id, None)
     if not test_user:
