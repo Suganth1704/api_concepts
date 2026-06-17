@@ -17,6 +17,7 @@ from app.utils.cache import (
 from typing import Annotated
 from app.config import get_settings
 from app.routes.schemas import User
+from app.db.client import get_db
 
 router = APIRouter()
 settings = get_settings()
@@ -124,4 +125,14 @@ async def update_user(test_user_id:str, user_data:User , current_user: dict = De
     }
 
     return JSONResponse(content=responses_content, status_code=status.HTTP_200_OK)
-    
+
+#Just for testing the db connection.
+@router.get("/movie")
+async def test_db(db = Depends(get_db)):
+    resp = db.movies.find_one({'title': 'Where Are My Children?'})
+    responses_content = {
+        'status_code':status.HTTP_200_OK,
+        'data': str(resp),
+        'message': 'Data updated successfully'
+    }
+    return JSONResponse(content=responses_content, status_code=status.HTTP_200_OK)

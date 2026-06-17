@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     REDIS_USR:str
     REDIS_PWD:str
 
+    #Mongo db
+    MONGO_DB_CL:str
+    MONGO_DB_ADMIN:str
+    MONGO_DB_ADM_PW:str
+    MONGO_API_DB:str
+
     # Application
     APP_NAME: str = "API Prod"
     DEBUG: bool = False
