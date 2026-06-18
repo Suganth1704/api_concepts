@@ -84,4 +84,4 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
             detail="Invalid authentication credentials"
         )
 
-    return {"username": username, "user_id": payload.get("user_id")}
+    return {"username": username, "email": payload.get("email")}

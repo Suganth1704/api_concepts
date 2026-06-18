@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Body
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from slowapi import Limiter
@@ -18,6 +18,10 @@ from typing import Annotated
 from app.config import get_settings
 from app.routes.schemas import User
 from app.db.client import get_db
+from app.models.user import (
+    AppUserIn,
+    AppUserOut
+)
 
 router = APIRouter()
 settings = get_settings()
@@ -55,11 +59,11 @@ def health():
     return {"Message":"Health looks good!"}
 
 @router.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db = Depends(get_db)):
     
-    user = USER_DB.get(form_data.username)
+    user = db.users.find_one({"email":form_data.username})
 
-    if not user or not verify_password(form_data.password, user["hashed_password"]):
+    if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail = "Incorrect username or password",
@@ -68,7 +72,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub":user["username"], "user_id":user["user_id"]},
+        data={"sub":user["user_name"], "email":user["email"]},
         expires_delta=access_token_expires
     )
 
@@ -85,7 +89,7 @@ async def current_user(current_user: dict = Depends(get_current_user)):
     """
     return {
         "message": f"Hello {current_user['username']}",
-        "user_id": current_user['user_id']
+        "email": current_user['email']
     }
 
 @router.get('/user/{test_user_id}')
@@ -126,13 +130,14 @@ async def update_user(test_user_id:str, user_data:User , current_user: dict = De
 
     return JSONResponse(content=responses_content, status_code=status.HTTP_200_OK)
 
-#Just for testing the db connection.
-@router.get("/movie")
-async def test_db(db = Depends(get_db)):
-    resp = db.movies.find_one({'title': 'Where Are My Children?'})
-    responses_content = {
-        'status_code':status.HTTP_200_OK,
-        'data': str(resp),
-        'message': 'Data updated successfully'
-    }
-    return JSONResponse(content=responses_content, status_code=status.HTTP_200_OK)
+@router.post('/signup', response_model=AppUserOut)
+async def signup_app_user(app_user: AppUserIn = Body(...), db = Depends(get_db)):
+    existing = db["users"].find_one({"email":app_user.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    new_user = app_user.dict()
+    new_user["password"] = get_password_hash(new_user["password"])
+    res = db.users.insert_one(new_user)
+    new_user["id"] = res.inserted_id
+
+    return new_user
